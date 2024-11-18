@@ -1,0 +1,760 @@
+# 6 系统架构
+
+## 6.1. 课程内容
+
+- 
+
+
+
+## 6.2. 目录结构
+
+```shell
+
+api        #请求：业务代码的请求
+component  #公共组件：header、footer、面包屑
+config	   #系统配置：环境变量
+layout		 #布局：上下结构、左右结构
+router		 #路由：封装、拦截
+utils			 #公共函数：日期、金额、权限拦截
+types			 #类型：typescript
+views			 #页面
+hook			 #自定义hook
+
+```
+
+
+
+## 6.3. api路由（推荐）
+
+```shell
+.tsx       #jsx页面组件
+.ts				#ts
+```
+
+
+
+router文件夹中的index.tsx封装路由
+
+```shell
+import { createHashRouter, Navigate } from 'react-router-dom'
+import Login from '@/views/login/Login'
+import Welcome from '@/views/welcome'
+import NotFound from '../views/404'
+
+const router = [
+  {
+    path: '/',
+    element: <Navigate to='/welcome' />
+  },
+  {
+    path: '/login',
+    element: <Login />
+  },
+  {
+    path: '/welcome',
+    element: <Welcome />
+  },
+  {
+    path: '*',
+    element: <Navigate to='/404' />				//其他错误页面均跳转到404
+  },
+  {
+    path: '/404',
+    element: <NotFound />
+  }
+]
+export default createHashRouter(router)
+
+```
+
+App.tsx中
+
+```shell
+import {RouterProvider} from 'react-router'
+import router from './router'
+
+function App(){
+	return <RouterProvider router={router} />
+}
+```
+
+
+
+
+
+
+
+## 6.4. 组件路由
+
+router文件夹中index.tsx
+
+```shell
+import{createBrowserRouter, createHashRouter,...} 
+
+const router=[
+  {
+    path:'/',
+    element: <Login/>
+  },{},{},{}    //同上
+]
+
+//使用useRoutes   导出Router组件
+export default function Router(){
+	return useRoutes(router);
+}
+```
+
+App.tsx中  添加Router组件
+
+```shell
+function App(){
+	return(
+		<HashRouter>			//或<BrowserRouter>
+			<Router />
+		</HashRouter>
+	)
+}
+```
+
+
+
+
+
+## 6.5. axios封装
+
+1. 使用useEffect
+
+   useEffect是一个hook函数，用于在react组件中创建不是由事件引起的，而是由渲染本身引起的操作，比如发送Ajax请求、更改DOM等
+
+   渲染本身引起：没有发生任何用户事件，组件渲染完成后，即刻向服务器请求数据
+
+   
+
+2. 创建实例
+
+```shell
+const instace = axios.create({
+	baseURL:'/api',
+	timeout:8000,
+	timeoutErrorMessage:'请求超时',
+	withCrendential:true,						//跨域
+	headers: {
+    icode: '94DF98A0E7184497'			//项目接口校验码
+  }
+})
+
+export default {
+
+	//原始：axios.get(url,{params:{}})
+  //封装后：eg:{a:1,b:2}  现在访问是params.a  封装之前原生是params.params.a
+	get(url,params){
+		return instance.get(url,{params})
+	},
+	
+	post(url,params){
+		return instance.post(url,params)
+	}
+}
+```
+
+3. request.ts
+
+```shell
+import reqeust from ...
+export default function Login(){
+
+	// useEffect: 没有用户事件，页面渲染本身引起的操作
+	useEffect(()=>{
+		request.get('/users/login',{id:1234})
+					 .catch(error=>{console.log('error:',error)})
+	},[])
+	
+	return <div>Login</div>
+}
+```
+
+
+
+
+
+## 6.6. 拦截器：请求拦截器、响应拦截器.  登陆
+
+​	instance.interceptors.request.use
+
+​	instance.interceptors.response.use
+
+axios拦截器模版：
+
+```shell
+// 添加请求拦截器
+axios.interceptors.request.use(function (config) {
+    // 在发送请求之前做些什么
+    return config;
+  }, function (error) {
+    // 对请求错误做些什么
+    return Promise.reject(error);
+  });
+
+// 添加响应拦截器
+axios.interceptors.response.use(function (response) {
+    // 2xx 范围内的状态码都会触发该函数。
+    // 对响应数据做点什么
+    return response;
+  }, function (error) {
+    // 超出 2xx 范围的状态码都会触发该函数。
+    // 对响应错误做点什么
+    return Promise.reject(error);
+  });
+```
+
+
+
+1. 请求拦截器 instance.interceptors.request.use
+
+```shell
+instance.interceptors.request.use( config => {
+
+	//浏览器【发送】请求后，浏览器拦截器要做的操作，随后【发送】到服务器
+	//1. 获取token
+	const token = localstorage.getItem()
+	//2. 如果token存在，拼接token
+	if(token){
+		config.headers.Authorization = 'Bearer '+ token		//Bearer后面要加个空格
+	}
+
+	//从参数中获得的config，在请求拦截器中操作后，返回成config，所以要用"..."展开运算符。
+	return {...config}	
+},
+
+	//报错处理
+	(error)=>{
+		return Promise.reject(error)
+	}
+)
+```
+
+
+
+2. 响应拦截器 instance.interceptors.response.use
+
+```shell
+import {message} from 'antd'
+
+instance.interceptors.response.use(
+	//服务器响应后，【回到】浏览器拦截器的操作，最后【返回】给浏览器
+	(response)=>{
+		//1. 拿到接口返回的结果
+		const data = response.data
+		if(data.code === 50001){	//登陆失效
+			message.error(data.msg)
+			//1. 删除toke
+			localstorage.removeItem('token')
+			
+			//2. 重定向到登陆页面  location原生
+			location.href='/login'
+      
+		}else if(data.code != 0){   //!0接口出错,0是成功，自定义的
+			message.error(data.msg)
+			return Promise.reject(data)
+		}
+		
+		// 最后返回数据
+		// data任意取名，但data中包含code、data、message等内容
+		// 所以要获得da ta.data的数据
+		return data.data
+	}
+
+	//报错处理
+	(error)=>{
+		return Promise.reject(error)
+	}
+)
+```
+
+
+
+
+
+
+
+## 6.7. Loading组件   全局设置
+
+**应用场景**：
+
+- `loading` 可以用来显示加载指示器或初始加载页面。
+- `app` 可以用来渲染实际的应用内容。
+- 在应用启动后，可以选择卸载 `loading` 内容，显示 `app` 的内容。
+
+
+
+​	用ReactDOM.createRoot渲染一个全局loading组件
+
+
+
+1. utils->loading->index.tsx     将antd中的loading组件，加载到全局
+
+```shell
+//导入ReactDOM
+import ReactDOM from 'react-dom/client'
+//导入antd中的Loading组件
+import Loading from './loading'
+
+//count控制loading显示次数
+let count = 0
+
+// 显示Loading组件   
+const showLoading = () => {
+	
+	//当第一次进入页面的时候，count=0，显示一次。后续不再显示
+	if(count === 0){
+		//原生创建<div id="loading"></div>
+		const dom = document.createElement('div')
+		dom.setAttribute('id','loading');
+	
+		//获取loading并渲染
+		const loading = document.getElementById('loading') as HTMLDivElement;
+		ReactDOM.createRoot(loading).render(<Loading />)
+	}
+	count++
+}
+
+// 隐藏Loading组件
+const hideLoading = () => {
+
+	// count小于0的时候，退出循环
+	if(count < 0) return			
+	count--
+	
+	// 当请求=0的时候，请求没有了
+	if(count === 0)
+	document.body.removeChild(document.getElementById('loading') as HtmlDivElement)
+}
+
+export default showLoading
+```
+
+
+
+2. utils->loading->loading.tsx
+
+```shell
+//导入antd中的Spin加载组件
+import { Spin } from 'antd'
+import './loading.less'
+
+export default function Loading({ tip = 'loading' }: { tip?: string }) {
+  return <Spin tip={tip} size='large' className='request-loading' />
+}
+
+
+导出3种方式：
+1. export const A = () => {}
+2. export default function A(){}
+3. const A = () => {}     export default A
+```
+
+
+
+
+
+
+
+## 6.10. 请求TS类型定义
+
+1. utils->request.ts
+
+```shell
+post<T>范型，T对应下面useEffect中的string
+post<T>是一个Promise的类型
+
+export default {
+	post<T>(url:string,params?:object):Promise<T>{
+		return instance.get(url,{params})
+	}
+}
+```
+
+2. views->Login.tsx
+
+```shell
+export default function Login(){
+	useEffect(()=>{
+		request.post<string>('user/login',{id:1234})
+	})
+}
+```
+
+
+
+
+
+## 6.11. Localstorage封装
+
+1. utils->storage.ts
+
+```shell
+/**
+ * localStorage模块封装
+ */
+
+export default {
+  /**
+   * storage存储
+   * @param key
+   * @param value
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  set(key: string, value: any) {
+    localStorage.setItem(key, JSON.stringify(value)) //value可能为对象，转化成string类型 {a:1}=>"{a:1}"
+  },
+
+  /**
+   * storage 读取
+   * @param key
+   * @returns
+   */
+  get(key: string) {
+    const value = localStorage.getItem(key)
+    if (!value) return ''
+    try {
+      return JSON.parse(value) //JSONParse将字符串转为对象
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      return value
+    }
+  },
+
+  /**
+   * 删除
+   * @param key
+   */
+  remove(key: string) {
+    localStorage.removeItem(key)
+  },
+
+  /**
+   * 清空
+   */
+  clear() {
+    localStorage.clear()
+  }
+}
+
+```
+
+
+
+
+
+## 6.12. 编译时环境变量
+
+.env.development、.env.production、.env.stag
+
+
+
+1. .env.development
+
+```shell
+# NODE_ENV
+NODE_ENV = development
+
+#接口API地址
+VITE_BASE_API = /api
+
+#上传API
+
+VITE_UPLOAD_API = http://api-driver-dev.marsview.cc
+
+#CDN地址
+VITE_CDN = http://www.aliyun.com
+
+#MOCK开关
+VITE_MOCK = false
+
+#MOCK API
+VITE_MOCK_API = http://www.fastmock.site
+
+```
+
+
+
+
+
+## 6.13. 运行时环境封装
+
+.env.development、.env.production、.env.stag
+
+
+
+### 推荐
+
+1. config->index.ts.     写这里就不需要写在.env.development中了
+
+```shell
+/**
+ * 环境配置封装
+ */
+
+type ENV = 'dev' | 'stg' | 'prd'
+
+let env: ENV = 'dev'
+
+//大于-1是开发环境
+if (location.host.indexOf('localhost') > -1) {
+  env = 'dev'
+} else if (location.host === 'driver-stg.marsview.cc') {
+  env = 'stg'
+} else {
+  env = 'prd'
+}
+
+const config = {
+  dev: {
+    baseApi: '/api',
+    uploadApi: 'http://api-driver-dev.marsview.cc',
+    cdn: 'http://xxx.aliyun.com',
+    mock: false,
+    mockApi: 'https://www.fastmock.site/mock/5841b82d5672783b6fd62bb2a06aeb1f/api'
+  },
+  stg: {
+    baseApi: '/api',
+    uploadApi: 'http://api-driver-stg.marsview.cc',
+    cdn: 'http://xxx.aliyun.com',
+    mock: false,
+    mockApi: 'https://www.fastmock.site/mock/5841b82d5672783b6fd62bb2a06aeb1f/api'
+  },
+  prd: {
+    baseApi: '/api',
+    uploadApi: 'http://api-driver.marsview.cc',
+    cdn: 'http://xxx.aliyun.com',
+    mock: false,
+    mockApi: 'https://www.fastmock.site/mock/5841b82d5672783b6fd62bb2a06aeb1f/api'
+  }
+}
+
+export default {
+  env,
+  ...config[env]
+}
+
+
+```
+
+
+
+
+
+## 6.14. 金额格式化、日期格式化
+
+
+
+1. utils->index.ts
+
+```shell
+/**
+ * 工具函数封装
+ */
+
+//格式化金额
+export const formatMoney = (num: number | string) => {
+  const a = parseFloat(num.toString()) //有number和string两种，先转化成string，再转化成number，才能使用format格式化
+  return a.toLocaleString('zh-CN', { style: 'currency', currency: 'CNY' })
+}
+
+//格式化日期
+export const toLocalDate = (date?: Date, rule?: string) => {
+  let curDate = new Date()
+  if (date) {
+    curDate = date
+  }
+  if (rule === 'yyyy-MM-dd') return curDate.toLocaleDateString().replaceAll('/', '-')
+  if (rule === 'HH:mm:sss') return curDate.toLocaleTimeString().replaceAll('/', '-')
+  return curDate.toLocaleDateString().replaceAll('/', '-')
+}
+
+```
+
+
+
+
+
+## 6.16. 接口整理
+
+
+
+#### API管理(37个)
+
+```shell
+/**
+ * API 接口管理
+ */
+
+import { Login, User, Dept, Role, MenuType, OrderType, ResultData } from '../types/api'
+import request from '@/utils/request'
+
+// 登录
+export default {
+  // 登录
+  login(params: Login.params) {
+    return request.post<string>('/users/login', params)
+  },
+  // 获取用户信息
+  getUserInfo() {
+    return request.get<User.UserItem>('/users/getUserInfo')
+  },
+  // 获取折线图数据
+  getLineData() {
+    return request.get<OrderType.LineData>('/order/dashboard/getLineData')
+  },
+  // 获取饼图1数据
+  getPieCityData() {
+    return request.get<OrderType.PieData[]>('/order/dashboard/getPieCityData')
+  },
+
+  // 获取饼图2数据
+  getPieAgeData() {
+    return request.get<OrderType.PieData[]>('/order/dashboard/getPieCityData')
+  },
+
+  // 获取雷达图数据
+  getRadarData() {
+    return request.get<OrderType.RadarData>('/order/dashboard/getRadarData')
+  },
+
+  // 获取统计数据
+  getReportData() {
+    return request.get<OrderType.ReportData>('/order/dashboard/getReportData')
+  },
+
+  // 获取用户列表
+  getUserList(params?: User.Params) {
+    return request.get<ResultData<User.UserItem>>('/users/list', params)
+  },
+
+  // 获取全量用户列表
+  getAllUserList(params?: User.Params) {
+    return request.get<User.UserItem[]>('/users/all/list', params)
+  },
+
+  // 用户添加
+  userCreate(params: User.CreateParams) {
+    return request.post('/users/create', params)
+  },
+  // 用户编辑
+  userEdit(params: User.CreateParams) {
+    return request.post('/users/edit', params)
+  },
+  // 用户删除
+  userDel(params: { userIds: number[] }) {
+    return request.post('/users/delete', params)
+  },
+  // 获取用户权限列表
+  getPermissionList() {
+    return request.get<{ buttonList: string[]; menuList: MenuType.MenuItem[] }>('/users/getPermissionList')
+  },
+
+  /* 菜单管理 */
+
+  // 菜单列表
+  getMenuList(params: MenuType.Params = {}) {
+    return request.get<MenuType.MenuItem[]>('/menu/list', params)
+  },
+  // 创建菜单
+  createMenu(params: MenuType.CreateParams) {
+    return request.post('/menu/create', params)
+  },
+  // 修改菜单
+  editMenu(params: MenuType.EditParams) {
+    return request.post('/menu/edit', params)
+  },
+  // 删除菜单
+  delMenuById(params: MenuType.DelParams) {
+    return request.post('/menu/delete', params)
+  },
+
+  /* 部门管理 */
+  // 获取部门列表
+  getDeptList(params: Dept.Params) {
+    return request.get<Dept.DeptItem[]>('/dept/list', params)
+  },
+  // 创建部门
+  createDept(params: Dept.CreateParams) {
+    return request.post('/dept/create', params)
+  },
+  // 修改部门
+  editDept(params: Dept.EditParams) {
+    return request.post('/dept/edit', params)
+  },
+  // 删除部门
+  delDeptById(params: Dept.DelParams) {
+    return request.post('/dept/delete', params)
+  },
+
+  /* 角色管理 */
+  // 获取所有角色
+  getRoleAllList() {
+    return request.get<Role.RoleItem[]>('/roles/allList', {})
+  },
+  // 获取角色列表
+  getRoleList(params: Role.Params) {
+    return request.get<ResultData<Role.RoleItem>>('/roles/list', params)
+  },
+  // 创建角色
+  createRole(params: Role.CreateParams) {
+    return request.post('/roles/create', params)
+  },
+  // 修改角色
+  editRole(params: Role.EditParams) {
+    return request.post('/roles/edit', params)
+  },
+  // 删除角色
+  delRoleById(params: { _id: string }) {
+    return request.post('/roles/delete', params)
+  },
+  // 更新权限
+  updatePermission(params: Role.CreatePermission) {
+    return request.post('/roles/update/permission', params)
+  },
+
+  /* 订单管理 */
+  // 获取订单列表
+  getVehicleList() {
+    return request.get<OrderType.DictItem[]>('/order/vehicleList')
+  },
+  getCityList() {
+    return request.get<OrderType.DictItem[]>('/order/cityList')
+  },
+  getOrderList(params: OrderType.OrderSearchParams) {
+    return request.get<OrderType.OrderData<OrderType.OrderItem>>('/order/list', params)
+  },
+  // 创建订单
+  createOrder(params: OrderType.OrderItem) {
+    return request.post('/order/create', params)
+  },
+  // 更新订单轨迹
+  updateOrderInfo(params: OrderType.OrderRoute) {
+    return request.post('/order/edit', params)
+  },
+  // 查询订单详情
+  getOrderDetail(orderId: string) {
+    return request.get<OrderType.OrderItem>(`/order/detail/${orderId}`)
+  },
+  // 删除订单
+  deleteOrder(params: { _id: string }) {
+    return request.post('/order/delete', params)
+  },
+  // 查询订单聚合
+  getOrderCluster(cityId: number) {
+    return request.get<Array<{ lng: string; lat: string }>>(`/order/cluster/${cityId}`)
+  },
+  // 查询司机列表
+  getDriverList(params: { driverName: string; accountStatus: number }) {
+    return request.get<OrderType.OrderData<OrderType.DriverItem>>(`/order/driver/list`, params)
+  },
+  // 文件流导出
+  orderExport(data: OrderType.OrderSearchParams) {
+    request.downloadFile('/order/orderExport', data)
+  }
+}
+```
+
