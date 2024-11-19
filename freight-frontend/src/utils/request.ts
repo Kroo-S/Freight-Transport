@@ -67,7 +67,9 @@ instance.interceptors.response.use(
       message.error(data.msg)
       // localStorage.removeItem('token') 使用storage
       storage.remove('token')
-      //location.href = '/login?callback=' + encodeURIComponent(location.href)
+
+      // 9-5：失败后跳转到登陆页
+      location.href = '#/login?callback=' + encodeURIComponent(location.href)
     } else if (data.code != 0) {
       if (response.config.showError === false) {
         return Promise.resolve(data)

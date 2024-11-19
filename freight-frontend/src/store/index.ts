@@ -1,5 +1,6 @@
 import { User } from '@/types/api'
 import { create } from 'zustand'
+import store from '@/store'
 
 // =============== zustand基础模型 ================
 // ts定义类型
@@ -18,10 +19,7 @@ import { create } from 'zustand'
 // ts定义类型
 type Store = {
   token: string
-  userInfo: {
-    userEmail: string
-    userName: string
-  }
+  userInfo: User.UserItem
   updateUserInfo: (userInfo: User.UserItem) => void
   updateToken: (token: string) => void
 
@@ -33,8 +31,19 @@ type Store = {
 const useBearStore = create<Store>(set => ({
   token: '',
   userInfo: {
+    _id: '',
+    userId: 0,
+    userName: '',
     userEmail: '',
-    userName: ''
+    deptId: '',
+    state: 0,
+    mobile: '',
+    job: '',
+    role: 0,
+    roleList: '',
+    createId: 0,
+    deptName: '',
+    userImg: ''
   },
   //保存用户数据的方法，使用形式：increasePopulation: () => set(state => ({ bears: state.bears + 1 })),
   updateUserInfo: (userInfo: User.UserItem) => set({ userInfo }),

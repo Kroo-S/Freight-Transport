@@ -25,6 +25,7 @@ declare module 'axios' {
   }
 }
 
+//用户的命名空间
 export namespace User {
   export interface UserItem {
     _id: string
@@ -40,5 +41,34 @@ export namespace User {
     createId: number
     deptName: string
     userImg: string
+  }
+}
+
+//9-4 工作台的命名空间
+export namespace Dashboard {
+  //卡片部分
+  export interface ReportData {
+    driverCount: number
+    totalMoney: number
+    orderCount: number
+    cityNum: number
+  }
+
+  // 9-6 图表接口类型定义：折线图、饼图1、饼图2、雷达图
+  export interface LineData {
+    label: string[]
+    order: number[]
+    money: number[]
+  }
+  export interface PieData {
+    value: number
+    name: string
+  }
+  export interface RadarData {
+    indicator: Array<{ name: string; max: number }>
+    data: {
+      name: string
+      value: number[]
+    }
   }
 }
