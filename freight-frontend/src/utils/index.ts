@@ -27,9 +27,12 @@ export const toLocalDate = (date?: Date, rule?: string) => {
 }
 
 // 格式化日期
-export const formatDate = (date?: Date, rule?: string) => {
+export const formatDate = (date?: Date | string, rule?: string) => {
   let curDate = new Date()
-  if (date) curDate = date
+  // date是Date类型，才能赋值；string不能赋值
+  if (date instanceof Date) curDate = date
+  //date不为空的时候，赋值
+  else if (date) curDate = new Date(date)
 
   let fmt = rule || 'yyyy-MM-dd HH:mm:ss'
   fmt = fmt.replace(/(y+)/, curDate.getFullYear().toString())

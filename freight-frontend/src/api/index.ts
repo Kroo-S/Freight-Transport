@@ -3,7 +3,7 @@
  */
 
 import request from '@/utils/request'
-import { Dashboard, Login, User } from '@/types/api'
+import { Dashboard, Login, ResultData, User } from '@/types/api'
 
 // 可以写成：
 // const login = () => {...}
@@ -51,5 +51,26 @@ export default {
   //雷达图接口
   getRadarData() {
     return request.get<Dashboard.RadarData>('/order/dashboard/getRadarData')
+  },
+
+  //获取用户列表
+  getUserList(params: User.Params) {
+    //User.Params继承了PageParams
+    return request.get<ResultData<User.UserItem>>('/users/list', params)
+  },
+
+  //创建用户接口
+  createUser(params: User.CreateParams) {
+    return request.post('/users/create', params)
+  },
+
+  //用户修改参数
+  editUser(params: User.EditUser) {
+    return request.post('/users/edit', params)
+  },
+
+  //删除、批量删除用户
+  delUser(params: { userIds: number[] }) {
+    return request.post('/users/delete', params)
   }
 }

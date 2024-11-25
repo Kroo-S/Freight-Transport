@@ -20,7 +20,7 @@ const DashBoard = () => {
 
   //setReport(data) 报错的原因是因为
   //api.getReportData() 返回的是一个 Promise 对象
-  //而 setReport 需要的是一个直接的值，而不是一个 Promise。
+  //而 setReport 需要的是一个直接的值，而不是一个 Promise。所以要使用async await
   const getReportData = async () => {
     const data = await api.getReportData()
     setReport(data)

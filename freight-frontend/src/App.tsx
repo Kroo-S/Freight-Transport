@@ -1,5 +1,5 @@
 import { RouterProvider } from 'react-router-dom'
-import './App.css'
+import './App.less'
 import router from '@/router'
 
 //主题色 antd

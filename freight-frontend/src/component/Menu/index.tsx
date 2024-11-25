@@ -43,7 +43,7 @@ const SideMenu = () => {
     <div>
       <div className={styles.logo} onClick={handleClickLogo}>
         <img src='/imgs/logo.png' className={styles.img} />
-        {collapsed ? '' : <span>慕慕货运</span>}
+        {collapsed ? '' : <span>货奔奔</span>}
       </div>
       <Menu
         defaultSelectedKeys={['1']}

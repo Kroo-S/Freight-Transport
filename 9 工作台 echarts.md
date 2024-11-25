@@ -4,7 +4,7 @@
 
 ## 9.1. 工作台个人信息静态布局
 
-​	antd中的 <Description/>
+​	dashboard中引入：antd中的 <Description/>
 
 ```shell
 import { Descriptions } from 'antd'
@@ -260,7 +260,8 @@ export const formatState = (state: number) => {
 ​	dashboard->index.tsx:   添加zustand，加载用户信息
 
 ```shell
- //9.4 添加zustand，加载个人信息
+  
+  // 9.4 添加zustand，加载个人信息
   const { userInfo } = useBearStore() //解构的方式
   
   	<Descriptions title='欢迎新同学，每天都要开心！'>
@@ -276,7 +277,7 @@ export const formatState = (state: number) => {
 
 
 
-#### ·工作台统计数据
+#### · 工作台统计数据
 
 types->api.ts中定义Dashboard的命名空间
 
@@ -296,27 +297,32 @@ export namespace Dashboard {
 api的index.ts中调用接口
 
 ```shell
-//获取工作台汇总数据
+  
+  // 获取工作台汇总数据
   getReportData() {
     return request.get<Dashboard.ReportData>('/order/dashboard/getReportData')
   }
+  
 ```
+
+
 
 dashboard中渲染工作台数据
 
 ```shell
- //9-4 获取工作台数据
+  
+  // 9-4 获取工作台数据
   const [report, setReport] = useState<Dashboard.ReportData>()
 
-  //setReport(data) 报错的原因是因为
-  //api.getReportData() 返回的是一个 Promise 对象
-  //而 setReport 需要的是一个直接的值，而不是一个 Promise。
+  // setReport(data) 报错的原因是因为
+  // api.getReportData() 返回的是一个 Promise 对象
+  // 而 setReport 需要的是一个直接的值，而不是一个 Promise。所以要使用async await
   const getReportData = async () => {
     const data = await api.getReportData()
     setReport(data)
   }
 
-  //useEffect渲染数据: useEffect()中不能写async
+  // useEffect渲染数据: useEffect()中不能写async
   useEffect(() => {
     getReportData()
   })
@@ -342,6 +348,7 @@ dashboard中渲染工作台数据
         </div>
       </div>
   )
+  
 ```
 
 
@@ -512,7 +519,7 @@ export namespace Dashboard {
 
 
 
-#### ·接口动态实现 api->index.ts
+#### ·接口动态实现 dashboard->index.tsx
 
 ​	折线图、饼图1、饼图2、雷达图
 
@@ -584,3 +591,4 @@ export namespace Dashboard {
   
 ```
 
+ 

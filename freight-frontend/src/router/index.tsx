@@ -4,6 +4,8 @@ import Welcome from '@/views/welcome'
 import NotFound from '../views/404'
 import Layout from '@/layout'
 import Dashboard from '@/views/dashboard'
+import User from '@/views/system/user'
+import UserListAhooks from '@/views/system/userListAhooks'
 
 const router = [
   {
@@ -24,6 +26,14 @@ const router = [
       {
         path: '/dashboard',
         element: <Dashboard />
+      },
+      {
+        path: '/userList',
+        element: <User />
+      },
+      {
+        path: '/userListAhooks',
+        element: <UserListAhooks />
       }
     ]
   },
