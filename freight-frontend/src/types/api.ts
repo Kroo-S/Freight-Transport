@@ -31,7 +31,48 @@ declare module 'axios' {
   }
 }
 
-// 用户的命名空间
+// 9-4 工作台的命名空间
+export namespace Dashboard {
+  // 卡片部分
+  export interface ReportData {
+    driverCount: number
+    totalMoney: number
+    orderCount: number
+    cityNum: number
+  }
+
+  // 9-6 图表接口类型定义：折线图、饼图1、饼图2、雷达图
+  export interface LineData {
+    label: string[]
+    order: number[]
+    money: number[]
+  }
+  export interface PieData {
+    value: number
+    name: string
+  }
+  export interface RadarData {
+    indicator: Array<{ name: string; max: number }>
+    data: {
+      name: string
+      value: number[]
+    }
+  }
+}
+
+// 10-3 列表分页结果
+export interface ResultData<T = any> {
+  list: T[]
+  page: {
+    pageNum: number
+    pageSize: number
+    total: number | 0
+  }
+}
+
+// =========================================================
+
+// 10. 用户的命名空间:用户管理
 export namespace User {
   // 10-3 用户列表接口
 
@@ -76,41 +117,35 @@ export namespace User {
   }
 }
 
-// 9-4 工作台的命名空间
-export namespace Dashboard {
-  // 卡片部分
-  export interface ReportData {
-    driverCount: number
-    totalMoney: number
-    orderCount: number
-    cityNum: number
+// 11.1 部门列表数据类型
+export namespace Dept {
+  export interface Params {
+    //1. 查询部门参数
+    deptName?: string
+  }
+  export interface DeptItem {
+    //2. 部门列表字段
+    _id: string
+    createTime: string
+    updateTime: string
+    deptName: string
+    parentId: string //上级部门
+    userName: string //管理人员
+    childrend: [] //子部门，也是一个DeptItem
   }
 
-  // 9-6 图表接口类型定义：折线图、饼图1、饼图2、雷达图
-  export interface LineData {
-    label: string[]
-    order: number[]
-    money: number[]
+  //3. 弹窗：新建部门参数
+  export interface CreateParams {
+    deptName: string
+    parentId?: string
+    userName: string
   }
-  export interface PieData {
-    value: number
-    name: string
+  //4. 弹窗：编辑用户参数，多一个id
+  export interface EditParams extends CreateParams {
+    _id: string
   }
-  export interface RadarData {
-    indicator: Array<{ name: string; max: number }>
-    data: {
-      name: string
-      value: number[]
-    }
-  }
-}
-
-// 10-3 列表分页结果
-export interface ResultData<T = any> {
-  list: T[]
-  page: {
-    pageNum: number
-    pageSize: number
-    total: number | 0
+  //5. 删除部门
+  export interface DelParams {
+    _id: string
   }
 }

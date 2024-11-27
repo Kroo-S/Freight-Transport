@@ -280,7 +280,7 @@ const UserList = () => {
             <Button type='primary' onClick={handleCreate}>
               新增
             </Button>
-            <Button type='primary' danger>
+            <Button type='primary' danger onClick={handleBatchDelete}>
               批量删除
             </Button>
           </div>

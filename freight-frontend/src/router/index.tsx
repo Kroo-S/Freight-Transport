@@ -6,6 +6,7 @@ import Layout from '@/layout'
 import Dashboard from '@/views/dashboard'
 import User from '@/views/system/user'
 import UserListAhooks from '@/views/system/userListAhooks'
+import Dept from '@/views/system/dept'
 
 const router = [
   {
@@ -34,6 +35,10 @@ const router = [
       {
         path: '/userListAhooks',
         element: <UserListAhooks />
+      },
+      {
+        path: '/deptlist',
+        element: <Dept />
       }
     ]
   },
