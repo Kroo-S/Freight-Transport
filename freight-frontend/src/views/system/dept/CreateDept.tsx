@@ -2,7 +2,7 @@
  * 部门弹窗
  */
 
-import { IAction, ImodalProp } from '@/types/modal'
+import { IAction, IModalProp } from '@/types/modal'
 import { Form, Input, Modal, Select, TreeSelect } from 'antd'
 import { useEffect, useImperativeHandle, useState } from 'react'
 import { Dept, User } from '@/types/api'
@@ -10,7 +10,7 @@ import { useForm } from 'antd/es/form/Form'
 import api from '@/api'
 import { message } from '@/utils/AntdGlobal'
 
-const CreateDept = (props: ImodalProp) => {
+const CreateDept = (props: IModalProp<User.UserItem>) => {
   //1. 定义table中action是创建还是修改
   const [action, setAction] = useState<IAction>('create')
   // 定义编辑的时候，回显的表单内容

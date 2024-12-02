@@ -149,3 +149,38 @@ export namespace Dept {
     _id: string
   }
 }
+
+// 12. 菜单列表
+export namespace Menu {
+  //1. 查询参数   Params
+  export interface Params {}
+
+  //2. 菜单创建   弹窗
+  export interface CreateParams {
+    menuName: string // 菜单名称
+    icon?: string // 菜单图标
+    menuType: number // 1: 菜单 2：按钮 3：页面
+    menuState: number // 1：正常 2：停用
+    menuCode?: string // 按钮权限标识
+    parentId?: string // 父级菜单ID
+    path?: string // 菜单路径
+    component?: string // 组件名称
+    orderBy: number // 组件排序
+  }
+
+  //3. 菜单列表   显示
+  export interface MenuItem extends CreateParams {
+    _id: string
+    createTime: string
+    buttons?: MenuItem[]
+    children?: MenuItem[]
+  }
+  //4. 编辑参数类型
+  export interface EditParams extends CreateParams {
+    _id?: string
+  }
+  //5. 删除菜单
+  export interface DelParams {
+    _id: string
+  }
+}

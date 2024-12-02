@@ -11,7 +11,9 @@ export type IAction = 'create' | 'edit' | 'delete'
 // interface newProps{className:string}
 
 // 接口类型,自定义mRef,用useRef绑定
-export interface ImodalProp {
-  mRef: MutableRefObject<{ open: (type: IAction, data: User.UserItem) => void } | undefined>
+
+// 默认参数为User.UserItem类型
+export interface IModalProp<T = User.UserItem> {
+  mRef: MutableRefObject<{ open: (type: IAction, data: T) => void } | undefined>
   update: () => void
 }

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { Layout, Watermark } from 'antd'
 import NavHeader from '@/component/NavHeader'
 import Menu from '@/component/Menu'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useRouteLoaderData } from 'react-router-dom'
 import styles from './index.module.less'
 import api from '@/api'
 

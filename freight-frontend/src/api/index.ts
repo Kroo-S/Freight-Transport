@@ -3,7 +3,7 @@
  */
 
 import request from '@/utils/request'
-import { Dashboard, Dept, Login, ResultData, User } from '@/types/api'
+import { Dashboard, Dept, Login, Menu, ResultData, User } from '@/types/api'
 
 // 可以写成：
 // const login = () => {...}
@@ -26,6 +26,10 @@ export default {
   // 获取用户信息
   getUserInfo() {
     return request.get<User.UserItem>('/users/getUserInfo')
+  },
+  //获取权限接口
+  getPermissionList() {
+    return request.get<{ buttonList: string[]; menuList: Menu.MenuItem[] }>('/users/getPermissionList')
   },
 
   // 获取工作台汇总数据
@@ -95,5 +99,24 @@ export default {
   //删除部门
   deleteDept(params: Dept.DelParams) {
     return request.post('/dept/delete', params)
+  },
+
+  // =================== 12. 菜单管理 ======================
+
+  // 查询菜单   参数可有可无   返回类型是个数组
+  getMenuList(params?: Menu.Params) {
+    return request.get<Menu.MenuItem[]>('/menu/list', params)
+  },
+  //创建菜单
+  createMenu(params: Menu.CreateParams) {
+    return request.post('/menu/create', params)
+  },
+  //编辑菜单
+  editMenu(params: Menu.EditParams) {
+    return request.post('/menu/edit', params)
+  },
+  //删除菜单
+  deleteMenu(params: Menu.DelParams) {
+    return request.post('/menu/delete', params)
   }
 }
