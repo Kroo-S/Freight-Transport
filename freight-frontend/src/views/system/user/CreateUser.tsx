@@ -1,18 +1,25 @@
 // 10.5 新增用户弹窗页面
 
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons'
-import { Form, GetProp, Input, Modal, Select, Upload, UploadProps } from 'antd'
-import { useImperativeHandle, useState } from 'react'
+import { Form, GetProp, Input, Modal, Select, TreeSelect, Upload, UploadProps } from 'antd'
+import { useEffect, useImperativeHandle, useState } from 'react'
 // 获取使用token
 import storage from '@/utils/storage'
 // antd中的message要搭配contextHolder使用；使用封装后的message
 import { message } from '@/utils/AntdGlobal'
-import { IAction, ImodalProp } from '@/types/modal'
-import { User } from '@/types/api'
+import { IAction, IModalProp } from '@/types/modal'
+import { Dept, Role, User } from '@/types/api'
 import api from '@/api'
+import roleApi from '@/api/roleApi'
 
 // 这里用的自定义属性mRef绑定，参数重没有ref
-const CreateUser = (props: ImodalProp) => {
+const CreateUser = (props: IModalProp) => {
+  //获取部门列表
+  const [deptList, setDeptList] = useState<Dept.DeptItem[]>([])
+
+  //获取角色列表
+  const [roleList, setRoleList] = useState<Role.RoleItem[]>([])
+
   // ========================== 10-7 用户弹窗封装 =========================
 
   // 1. 弹窗显示
@@ -32,6 +39,25 @@ const CreateUser = (props: ImodalProp) => {
       setImg(data.userImg)
     }
   }
+
+  // ====================== 13.6 回显部门树状图 ===========================
+  useEffect(() => {
+    getDeptList()
+  }, [])
+
+  // 获取部门列表
+  const getDeptList = async () => {
+    const list = await api.getDeptList()
+    setDeptList(list)
+  }
+
+  // 获取角色列表  role
+  const getRoleList = async () => {
+    const list = await roleApi.getAllRoleList()
+    setRoleList(list)
+  }
+
+  // ====================================================================
 
   // useImperativeHandle让父组件可以调用子组件中的方法，即open(),进行用户新增
   // 4. 暴露子组件open方法
@@ -168,8 +194,26 @@ const CreateUser = (props: ImodalProp) => {
         >
           <Input type='number' placeholder='请输入手机号'></Input>
         </Form.Item>
-        <Form.Item label='部门' name='deptId'>
-          <Input placeholder='请输入部门'></Input>
+        <Form.Item
+          label='部门'
+          name='deptId'
+          rules={[
+            {
+              required: true,
+              message: '请选择部门'
+            }
+          ]}
+        >
+          {/* <Input placeholder='请输入部门'></Input> */}
+          {/* 使用树状图显示 */}
+          <TreeSelect
+            placeholder='请选择部门'
+            allowClear
+            treeDefaultExpandAll
+            showCheckedStrategy={TreeSelect.SHOW_ALL}
+            fieldNames={{ label: 'deptName', value: '_id' }}
+            treeData={deptList}
+          />
         </Form.Item>
         <Form.Item label='岗位' name='job'>
           <Input placeholder='请输入岗位'></Input>
@@ -182,7 +226,17 @@ const CreateUser = (props: ImodalProp) => {
           </Select>
         </Form.Item>
         <Form.Item label='角色' name='roleList'>
-          <Input placeholder='请输入角色'></Input>
+          {/* <Input placeholder='请输入角色'></Input> */}
+          <Select placeholder='请选择角色'>
+            {/* 遍历rolelist，获得每个角色 */}
+            {roleList.map(item => {
+              return (
+                <Select.Option value={item._id} key={item._id}>
+                  {item.roleName}
+                </Select.Option>
+              )
+            })}
+          </Select>
         </Form.Item>
 
         {/* 10-6 图片上传 */}

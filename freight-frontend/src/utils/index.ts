@@ -49,7 +49,7 @@ export const formatDate = (date?: Date | string, rule?: string) => {
     's+': curDate.getSeconds()
   }
   for (const k in O) {
-    const val = O[k].toString()
+    const val: string = O[k].toString()
     fmt = fmt.replace(new RegExp(`(${k})`), O[k] > 9 ? O[k].toString() : '0' + O[k].toString())
     // fmt = fmt.replace(new RegExp(`(${k})`), ('00' + val).substring(val.length))
   }
@@ -70,4 +70,17 @@ export const getMenuPath = (list: Menu.MenuItem[]): string[] => {
     //or 否则存储路径,字符串后面+‘’
     return result.concat(Array.isArray(item.children) && !item.buttons ? getMenuPath(item.children) : item.path + '')
   }, [])
+}
+
+//13.7 递归获取路由的对象,当路由中有auth:false,则跳过
+export const searchRoute: any = (path: string, routes: any = []) => {
+  for (const item of routes) {
+    //当等于目标对象，返回
+    if (item.path === path) return item
+    //子对象返回
+    if (item.children) {
+      return searchRoute(path, item.children)
+    }
+  }
+  return '' //没找到返回空字符串
 }
