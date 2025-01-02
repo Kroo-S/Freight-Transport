@@ -9,8 +9,9 @@ import UserListAhooks from '@/views/system/userListAhooks'
 import Dept from '@/views/system/dept'
 import Menu from '@/views/system/menu'
 import AuthLoader from './AuthLoader'
+import Role from '@/views/system/role'
 
-const router = [
+export const router = [
   {
     path: '/',
     element: <Navigate to='/welcome' />
@@ -22,6 +23,8 @@ const router = [
   {
     id: 'layout',
     element: <Layout />,
+    //  该 loader 与 Layout 路由绑定。
+    //  当用户访问 /welcome、/dashboard、/userList 等 Layout 子路由时，AuthLoader 会在组件渲染之前执行。
     loader: AuthLoader,
     children: [
       {
@@ -47,6 +50,13 @@ const router = [
       {
         path: '/menulist',
         element: <Menu />
+        // meta: {
+        //   auth: false //没有权限认证
+        // }
+      },
+      {
+        path: '/rolelist',
+        element: <Role />
       }
     ]
   },
