@@ -184,3 +184,37 @@ export namespace Menu {
     _id: string
   }
 }
+
+// 13 角色管理
+export namespace Role {
+  export interface Params extends PageParams {
+    roleName?: string
+  }
+  export interface CreateParams {
+    roleName: string
+    remark?: string
+  }
+  export interface RoleItem extends CreateParams {
+    _id: string
+    permissionList: {
+      checkedKeys: string[] //全选  antd
+      halfCheckedKeys: string[] //半全选  antd的tree的属性
+    }
+    updateTime: string
+    createTime: string
+  }
+
+  //编辑用户
+  export interface EditParams extends CreateParams {
+    _id: string
+  }
+
+  //权限类型
+  export interface Permission {
+    _id: string
+    permissionList: {
+      checkedKeys: string[] //全选  antd
+      halfCheckedKeys: string[] //半全选  antd的tree的属性
+    }
+  }
+}

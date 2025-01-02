@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 //10.5 导入弹窗
 import CreateUser from './CreateUser'
 import { IAction } from '@/types/modal'
+import AuthButton from '@/component/AuthButton'
 
 const UserList = () => {
   //=========================== 10.4 1. 加载页面，初始化分页 ===========================
@@ -277,9 +278,9 @@ const UserList = () => {
         <div className='header-wrapper'>
           <div className='title'>用户列表</div>
           <div className='action'>
-            <Button type='primary' onClick={handleCreate}>
+            <AuthButton type='primary' onClick={handleCreate}>
               新增
-            </Button>
+            </AuthButton>
             <Button type='primary' danger onClick={handleBatchDelete}>
               批量删除
             </Button>
