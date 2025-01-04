@@ -84,3 +84,15 @@ export const searchRoute: any = (path: string, routes: any = []) => {
   }
   return '' //没找到返回空字符串
 }
+
+//14.3 加密手机号
+/**
+ * 手机号加密
+ * @example
+ * 17611000011 => 176****0011
+ */
+export const formateMobile = (mobile?: number) => {
+  if (!mobile) return '-'
+  const phone = mobile.toString()
+  return phone.replace(/(\d{3})\d*(\d{4})/, '$1****$2')
+}

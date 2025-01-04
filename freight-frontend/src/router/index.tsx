@@ -10,6 +10,9 @@ import Dept from '@/views/system/dept'
 import Menu from '@/views/system/menu'
 import AuthLoader from './AuthLoader'
 import Role from '@/views/system/role'
+import OrderList from '@/views/order/OrderList'
+import OrderCluster from '@/views/order/OrderCluster'
+import DriverList from '@/views/order/DriverList'
 
 export const router = [
   {
@@ -57,6 +60,18 @@ export const router = [
       {
         path: '/rolelist',
         element: <Role />
+      },
+      {
+        path: '/orderList',
+        element: <OrderList />
+      },
+      {
+        path: '/cluster',
+        element: <OrderCluster /> //订单聚合
+      },
+      {
+        path: '/driverList',
+        element: <DriverList /> //司机列表
       }
     ]
   },

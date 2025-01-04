@@ -62,6 +62,12 @@ instance.interceptors.response.use(
     const data: Result = response.data
     hideLoading()
 
+    // ==============14.8 导出文件 =================
+    //二进制文件流继续执行不报错：当拦截的是二进制blob对象的时候，直接返回
+    if (response.config.responseType == 'blob') return response
+
+    // ==========================
+
     // 1. 50001未登陆，重定向到login页面
     if (data.code === 500001) {
       message.error(data.msg)
@@ -104,5 +110,29 @@ export default {
   },
   post<T>(url: string, params?: object, options: IConfig = { showLoading: true, showError: true }): Promise<T> {
     return instance.post(url, params, options)
+  },
+
+  //14.8 封装文件下载功能
+  downLoadFile(url: string, data: any, fileName = 'fileName.xlsx') {
+    instance({
+      url,
+      data,
+      method: 'post',
+      responseType: 'blob' //二进制对象，下载文件
+    }).then(response => {
+      const blob = new Blob([response.data], {
+        type: response.data.type
+      })
+
+      //开始导出
+      const name = (response.headers['file-name'] as string) || fileName
+      const link = document.createElement('a')
+      link.download = decodeURIComponent(name) //防止乱码
+      link.href = URL.createObjectURL(blob)
+      document.body.append(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(link.href)
+    })
   }
 }

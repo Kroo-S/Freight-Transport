@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + React + TS</title>
+
+    <!-- 地图初始化 -->
+   <script
+      type="text/javascript"
+      src="//api.map.baidu.com/api?type=webgl&v=1.0&ak=您的密钥"
+    ></script>
+
+    <!-- 地图轨迹动画 -->
+    <script src="//mapopen.bj.bcebos.com/github/BMapGLLib/TrackAnimation/src/TrackAnimation.min.js"></script>
+
+    <!-- 地图轨迹和地图聚合在不同的api，这里直接引用2个js -->
+    <script src='TextIconOverlayGL_min.js'></script>
+    <script src='MarkerClustererGL_min.js'></script>
+
     <style>
       .loading {
         animation: rotate linear 1.5s infinite;

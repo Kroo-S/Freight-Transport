@@ -278,7 +278,7 @@ const UserList = () => {
         <div className='header-wrapper'>
           <div className='title'>用户列表</div>
           <div className='action'>
-            <AuthButton type='primary' onClick={handleCreate}>
+            <AuthButton auth='create' type='primary' onClick={handleCreate}>
               新增
             </AuthButton>
             <Button type='primary' danger onClick={handleBatchDelete}>
