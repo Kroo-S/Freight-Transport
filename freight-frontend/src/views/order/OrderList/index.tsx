@@ -12,6 +12,7 @@ import OrderDetail from './components/OrderDetail'
 import OrderMarker from './components/OrderMarker'
 import OrderRoute from './components/OrderRoute'
 import { message } from '@/utils/AntdGlobal'
+import CreateOrderNew from './components/CreateOrderNew'
 
 const OrderList = () => {
   const [form] = Form.useForm()
@@ -24,6 +25,9 @@ const OrderList = () => {
   const markerRef = useRef<{ open: (orderId: string) => void }>()
   //地图运动轨迹ref
   const routeRef = useRef<{ open: (orderId: string) => void }>()
+
+  //15.5 Xrender创建表单
+  const orderNewRef = useRef<{ open: () => void }>()
 
   const getTableData = (
     { current, pageSize }: { current: number; pageSize: number },
@@ -141,6 +145,11 @@ const OrderList = () => {
     }
   ]
 
+  //创建订单弹窗显示  CreateOrderNew.tsx
+  const handleCreateNew = () => {
+    orderNewRef.current?.open()
+  }
+
   //创建订单弹窗显示  CreateOrder.tsx
   const handleCreate = () => {
     orderRef.current?.open()
@@ -218,6 +227,9 @@ const OrderList = () => {
             <Button type='primary' onClick={handleCreate}>
               新增
             </Button>
+            <Button type='primary' onClick={handleCreateNew}>
+              XRender 新增2
+            </Button>
             <Button type='primary' onClick={handleExport}>
               导出
             </Button>
@@ -238,6 +250,9 @@ const OrderList = () => {
 
       {/* 地图轨迹 */}
       <OrderRoute mRef={routeRef} />
+
+      {/* 15-5 XRender插件使用 */}
+      <CreateOrderNew mRef={orderNewRef} update={search.submit} />
     </div>
   )
 }

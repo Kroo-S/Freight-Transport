@@ -6,7 +6,7 @@ import { useLocation, useNavigate, useRouteLoaderData } from 'react-router-dom'
 import useBearStore from '@/store'
 
 //导入menu组件
-import type { MenuProps, MenuTheme } from 'antd/es/menu'
+import type { MenuProps } from 'antd/es/menu'
 import { useEffect, useState } from 'react'
 import React from 'react'
 
@@ -23,6 +23,9 @@ const SideMenu = () => {
 
   //引入zustand中的collapsed
   const collapsed = useBearStore(state => state.collapsed)
+
+  //15.8 zustand获取主题色
+  const isDark = useBearStore(state => state.isDark)
 
   // =================== 12-5 权限接口：使用router中loader的数据 ===================
   const data: any = useRouteLoaderData('layout')
@@ -112,7 +115,7 @@ const SideMenu = () => {
   }
 
   return (
-    <div>
+    <div className={styles.navSider}>
       <div className={styles.logo} onClick={handleClickLogo}>
         <img src='/imgs/logo.png' className={styles.img} />
         {collapsed ? '' : <span>货奔奔</span>}
@@ -120,9 +123,10 @@ const SideMenu = () => {
       <Menu
         defaultSelectedKeys={['1']}
         mode='inline'
-        theme='dark'
+        theme={isDark ? 'light' : 'dark'}
         style={{
-          width: collapsed ? 80 : 'auto'
+          width: collapsed ? 80 : 'auto',
+          height: 'calc(100vh - 50px)'
         }}
         selectedKeys={selectedKeys}
         onClick={handleClickMenu}

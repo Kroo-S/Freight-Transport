@@ -1,0 +1,888 @@
+# 章节介绍
+
+- 面包屑实现
+
+- 路由懒加载
+
+- 多页签实现
+
+- 封装SearchForm组件
+
+- 基于XRender快速生成表单
+
+- 主题色设置
+
+- 课程总结
+
+
+
+
+
+
+
+
+
+
+
+## 15-1  面包屑
+
+<img src="/Users/macbook/Library/Application Support/typora-user-images/image-20250105111534442.png" alt="image-20250105111534442" style="zoom:50%;" />
+
+
+
+
+
+
+
+### 面包屑实现
+
+###### 方案一：
+
+遍历本地router.ts中定义的路由对象，给每个路由添加meta对象，设置菜单名称和父菜单名称，比如：
+
+```js
+{
+    path: '/userList',
+    element: <User />,
+    meta:{
+        breadList: ['系统管理','用户列表']
+    }
+},
+```
+
+缺点：如果通过菜单页面修改了名称，还需要同步修改本地，比较繁琐。
+
+###### 方案二：
+
+菜单列表本身已经是动态生成的，我们可以直接对菜单树进行递归查找，生成对应的面包屑。不需要维护本地。
+
+案例：
+
+已知如下JSON：
+
+```ts
+[
+    {
+        path:'system',
+        menuName: '系统管理',
+        children:[ 
+            { path:'/userList', menuName: '用户列表', } 
+        ]
+    },
+    {
+        path:'order',
+        menuName: '订单管理',
+        children:[ 
+            { path:'/orderList', menuName: '订单列表', } 
+        ]
+    },
+]
+```
+
+输入：/userList
+
+返回：[ '系统管理', '用户列表' ]
+
+```ts
+// 树节点路径查找
+export const findTreeNode = (tree: MenuType.MenuItem[], pathName: string, path: string[] = []): string[] => {
+  if (!tree) return []
+  for (const data of tree) {
+    path.push(data.menuName)
+    if (data.path === pathName) return path
+    if (data.children) {
+      const findChildren = findTreeNode(data.children, pathName, path)
+      if (findChildren.length) return findChildren
+    }
+    path.pop()
+  }
+  return []
+}
+```
+
+
+
+### 1. 面包屑组件   component->NavHeader->BreadCrum.tsx
+
+```ts
+import { IAuthLoader } from '@/router/AuthLoader'
+import { findTreeNode } from '@/utils'
+import { Breadcrumb } from 'antd'
+import { ReactNode, useEffect, useState } from 'react'
+import { useLocation, useRouteLoaderData } from 'react-router-dom'
+
+const BreadCrumb = () => {
+  const { pathname } = useLocation()
+  const [breadList, setBreadList] = useState<(string | ReactNode)[]>([])
+  // 权限判断
+  const data = useRouteLoaderData('layout') as IAuthLoader
+
+  useEffect(() => {
+    const list = findTreeNode(data.menuList, pathname, [])
+    setBreadList([<a href='/welcome'>首页</a>, ...list])
+  }, [pathname])
+  return <Breadcrumb items={breadList.map(item => ({ title: item }))} style={{ marginLeft: 10 }} />
+}
+
+export default BreadCrumb
+
+```
+
+
+
+### 2. 递归查找树 
+
+```ts
+/**
+ * 递归查找树的路径
+ */
+export const findTreeNode = (tree: Menu.MenuItem[], pathName: string, path: string[]): string[] => {
+  if (!tree) return []
+  for (const data of tree) {
+    path.push(data.menuName)
+    if (data.path === pathName) return path
+    if (data.children?.length) {
+      const list = findTreeNode(data.children, pathName, path)
+      if (list?.length) return list
+    }
+    path.pop()
+  }
+  return []
+}
+```
+
+
+
+
+
+
+
+
+
+## 15-2  路由懒加载
+
+### 路由懒加载实现
+
+懒加载实际上就是按需加载，初始化时，不会加载，等到需要的时候再去加载。最常见的就是图片懒加载。
+
+作用：提高首屏加载速度，减小 vendor 包体积
+
+中文文档：[<Suspense> – React](https://react.dev/reference/react/Suspense)
+
+###### 实现方案（React.lazy+Suspense）
+
+一、使用`lazy`加载组件
+
+```js
+const User = React.lazy(() => import('@/views/system/user'))
+
+
+{
+    path: '/userList',
+    element: <User />
+},
+```
+
+二、使用Suspense组件包裹
+
+```js
+<Suspense fallback='Loading...'>
+    <User />
+</Suspense>
+```
+
+[<Suspense> – React](https://react.dev/reference/react/Suspense)
+
+
+
+
+
+
+
+### 1. router->LazyLoad.tsx 
+
+```ts
+import { Spin } from 'antd'
+import { Suspense } from 'react'
+
+/**
+ * 组件懒加载，使用suspense实现
+ * @param Component  组件对象
+ * @returns  返回新组件
+ */
+
+const lazyLoad = (Component: React.LazyExoticComponent<() => JSX.Element>): React.ReactNode => {
+  return (
+    <Suspense
+      fallback={
+        <Spin
+          size='large'
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
+        />
+      }
+    >
+      <Component />
+    </Suspense>
+  )
+}
+
+export default lazyLoad
+
+```
+
+
+
+### 2. router->index.tsx     路由用lazyLoad封装
+
+```ts
+import { createHashRouter, Navigate } from 'react-router-dom'
+import Login from '@/views/login/Login'
+import Welcome from '@/views/welcome'
+import NotFound from '../views/404'
+import Layout from '@/layout'
+//import Dashboard from '@/views/dashboard'
+//import User from '@/views/system/user'
+//import UserListAhooks from '@/views/system/userListAhooks'
+//import Dept from '@/views/system/dept'
+//import Menu from '@/views/system/menu'
+import AuthLoader from './AuthLoader'
+// import Role from '@/views/system/role'
+// import OrderList from '@/views/order/OrderList'
+// import OrderCluster from '@/views/order/OrderCluster'
+// import DriverList from '@/views/order/DriverList'
+
+// ================== 15.2 懒加载 ==================
+
+import React from 'react'
+import lazyLoad from './LazyLoad'
+//const Dashboard = React.lazy(() => import('@/views/dashboard'))
+
+// ================================================
+
+export const router = [
+  {
+    path: '/',
+    element: <Navigate to='/welcome' />
+  },
+  {
+    path: '/login',
+    element: <Login />
+  },
+  {
+    id: 'layout',
+    element: <Layout />,
+    //  该 loader 与 Layout 路由绑定。
+    //  当用户访问 /welcome、/dashboard、/userList 等 Layout 子路由时，AuthLoader 会在组件渲染之前执行。
+    loader: AuthLoader,
+    children: [
+      {
+        path: '/welcome',
+        element: <Welcome />
+      },
+      {
+        path: '/dashboard',
+        //element: <Dashboard />
+        element: lazyLoad(React.lazy(() => import('@/views/dashboard')))
+      },
+      {
+        path: '/userList',
+        //element: <User />
+        element: lazyLoad(React.lazy(() => import('@/views/system/user')))
+      },
+      // {
+      //   path: '/userListAhooks',
+      //   element: <UserListAhooks />
+      // },
+      {
+        path: '/deptlist',
+        //element: <Dept />
+        element: lazyLoad(React.lazy(() => import('@/views/system/dept')))
+      },
+      {
+        path: '/menulist',
+        element: lazyLoad(React.lazy(() => import('@/views/system/menu')))
+        //element: <Menu />
+        // meta: {
+        //   auth: false //没有权限认证
+        // }
+      },
+      {
+        path: '/rolelist',
+        element: lazyLoad(React.lazy(() => import('@/views/system/role')))
+        //element: <Role />
+      },
+      {
+        path: '/orderList',
+        //element: <OrderList />
+        element: lazyLoad(React.lazy(() => import('@/views/order/OrderList')))
+      },
+      {
+        path: '/cluster',
+        //element: <OrderCluster /> //订单聚合
+        element: lazyLoad(React.lazy(() => import('@/views/order/OrderCluster')))
+      },
+      {
+        path: '/driverList',
+        //element: <DriverList /> //司机列表
+        element: lazyLoad(React.lazy(() => import('@/views/order/DriverList')))
+      }
+    ]
+  },
+  {
+    path: '*',
+    element: <Navigate to='/404' />
+  },
+  {
+    path: '/404',
+    element: <NotFound />
+  }
+]
+
+// eslint-disable-next-line react-refresh/only-export-components
+export default createHashRouter(router)
+
+```
+
+
+
+
+
+
+
+## 15-3  多页签功能实现
+
+<img src="/Users/macbook/Library/Application Support/typora-user-images/image-20250105111548508.png" alt="image-20250105111548508" style="zoom:50%;" />
+
+
+
+
+
+### 1. component->TabsFC.tsx 
+
+```ts
+import { IAuthLoader } from '@/router/AuthLoader'
+import { searchRoute } from '@/utils'
+import { Tabs } from 'antd'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useRouteLoaderData } from 'react-router-dom'
+
+//接口类型定义
+interface TabsItem {
+  key: string
+  label: string
+  closable: boolean
+}
+
+const TabsFC = () => {
+  //标签空数组
+  const [tabsList, setTabList] = useState<TabsItem[]>([{ key: '/welcome', label: '首页', closable: false }])
+
+  //标签文字激活显示
+  const [activeKey, setActiveKey] = useState('')
+
+  //路由切换
+  const navigate = useNavigate()
+
+  // 获取页面数据
+  const { pathname } = useLocation()
+  //获取layout中的loader数据
+  const data = useRouteLoaderData('layout') as IAuthLoader
+
+  useEffect(() => {
+    addTabs()
+  }, [pathname]) //当pathname变化时候，重新创建一次
+
+  //创建页签
+  const addTabs = () => {
+    const route = searchRoute(pathname, data.menuList)
+
+    //删除之后，如果没有标签，直接return
+    if (!route) return
+
+    //避免重复标签：如果数组中没有选项，添加。
+    if (!tabsList.find(item => item.key === route.path)) {
+      console.log('route', route)
+      tabsList.push({
+        key: route.path,
+        label: route.menuName,
+        closable: pathname !== '/welcome'
+      })
+    }
+
+    setTabList([...tabsList])
+    //激活标签文字
+    setActiveKey(pathname)
+  }
+
+  // const items = [
+  //   {
+  //     key: '1',
+  //     label: 'Tab1'
+  //   }
+  // ]
+
+  //路由切换：点击标签切换页面
+  const handleChange = (path: string) => {
+    navigate(path)
+  }
+
+  //关闭标签
+  //pathname是url
+  //path是标签按钮
+
+  const handleDelete = (path: string) => {
+    //1. 当选中标签，去关闭的当前页的时候
+    if (pathname === path) {
+      //如果关闭的标签和页面路径一致，遍历标签数组
+      tabsList.forEach((item, index: number) => {
+        //当数值不等于路径,退出循环，不navigate切换页面
+        if (item.key != pathname) return
+        //设置下一个标签是左右标签
+        const nextTab = tabsList[index + 1] || tabsList[index - 1]
+        //到没有取到左右标签，退出循环，不navigate切换页面
+        if (!nextTab) return
+        //否则切换到对应标签页
+        navigate(nextTab.key)
+      })
+    }
+
+    //2. 关闭的标签 和 url地址不一样的时候，
+    //设置新的标签数组,过滤形成不包括当前路径的标签数组
+    setTabList(tabsList.filter(item => item.key != path))
+  }
+
+  return (
+    <Tabs
+      activeKey={activeKey}
+      items={tabsList}
+      tabBarStyle={{ height: 40, marginBottom: 0, backgroundColor: '#FFF' }}
+      type='editable-card'
+      hideAdd
+      onChange={handleChange}
+      onEdit={path => {
+        handleDelete(path as string)
+      }}
+    />
+  )
+}
+
+export default TabsFC
+
+```
+
+
+
+### 
+
+
+
+
+
+## 15-4  搜索组件封装SearchForm
+
+
+
+#### 封装 搜索 和 重置  的按钮
+
+<img src="/Users/macbook/Library/Application Support/typora-user-images/image-20250105161311349.png" alt="image-20250105161311349" style="zoom:50%;" />
+
+
+
+
+
+### 1. component->SearchForm.tsx 
+
+```ts
+import { Button, Form, Space } from 'antd'
+
+/**
+ * 搜索表单容器组件封装   搜索按钮 & 重置按钮
+ * @param props
+ * @returns
+ */
+const SearchForm = (props: any) => {
+  return (
+    <Form className='search-form' form={props.form} layout='inline' initialValues={props.initialValues}>
+      {props.children}
+      <Form.Item>
+        <Space>
+          <Button type='primary' onClick={props.submit}>
+            搜索
+          </Button>
+          <Button type='default' onClick={props.reset}>
+            重置
+          </Button>
+        </Space>
+      </Form.Item>
+    </Form>
+  )
+}
+
+export default SearchForm
+
+```
+
+
+
+
+
+### 2. views->system->userListAhooks->index.tsx
+
+​	此页面和user一样，只是使用了ahooks分页插件
+
+```ts
+ {/* ====================== 15.4 封装搜索和重置按钮的搜索部分 =================== */}
+      <SearchForm form={form} initialValues={{ state: 1 }} submit={search.submit} reset={search.reset}>
+        <Form.Item name='userId' label='用户ID'>
+          <Input placeholder='ID' />
+        </Form.Item>
+
+        <Form.Item name='userName' label='用户名称'>
+          <Input placeholder='Name' />
+        </Form.Item>
+
+        <Form.Item name='state' label='状态'>
+          <Select style={{ width: 120 }}>
+            <Select.Option value={0}>所有</Select.Option>
+            <Select.Option value={1}>在职</Select.Option>
+            <Select.Option value={2}>试用期</Select.Option>
+            <Select.Option value={3}>离职</Select.Option>
+          </Select>
+        </Form.Item>
+      </SearchForm>
+```
+
+
+
+
+
+
+
+## 15-5  XRender插件集成使用
+
+
+
+<img src="/Users/macbook/Library/Application Support/typora-user-images/image-20250106101258245.png" alt="image-20250106101258245" style="zoom:50%;" />
+
+
+
+### 1. views->order->OrderList->components->CreateOrderNew.tsx
+
+​	Schema中的json格式来替换Antd，更方便
+
+```ts
+import api from '@/api/orderApi'
+
+import { IModalProp } from '@/types/modal'
+import { message } from '@/utils/AntdGlobal'
+import { Modal } from 'antd'
+import { useImperativeHandle, useState } from 'react'
+
+//15.5 导入插件XRender
+import FormRender, { useForm } from 'form-render'
+
+const CreateOrder = (props: IModalProp) => {
+  //1. 弹窗显示属性
+  const [visable, setVisable] = useState(false)
+  // const [cityList, setCityList] = useState<Order.DictItem[]>([])
+  // const [vehicleList, setVehicleList] = useState<Order.DictItem[]>([])
+
+  // const [form] = Form.useForm()
+  const form = useForm()
+
+  // 初始化城市列表、车型列表
+  const getInitData = async () => {
+    const cityList = await api.getCityList()
+    const vehicleList = await api.getVehicleList()
+    // setCityList(cityList)
+    // setVehicleList(vehicleList)
+
+    //Xrender初始化数据，用setSchema
+    form.setSchema({
+      cityName: {
+        props: {
+          options: cityList.map(item => ({ label: item.name, value: item.name }))
+        }
+      },
+      vehicleName: {
+        props: {
+          options: vehicleList.map(item => ({ label: item.name, value: item.name }))
+        }
+      }
+    })
+  }
+
+  //2. 子组件[弹窗]的open方法暴露给父组件[页面]使用
+  useImperativeHandle(props.mRef, () => {
+    return { open }
+  })
+
+  //3. 子组件的open方法
+  const open = () => {
+    setVisable(true)
+  }
+
+  //hanldeOk 订单提交
+  const handleOk = async () => {
+    const valid = await form.validateFields()
+    if (valid) {
+      await api.createOrder(form.getValues()) //antd使用的是form.getFieldsValue()
+      message.success('创建成功')
+      handleCancel()
+      props.update()
+    }
+  }
+
+  //handleCnacel 弹窗关闭
+  const handleCancel = () => {
+    form.resetFields()
+    setVisable(false)
+  }
+
+  //XRender中的schema
+  const schema = {
+    type: 'object',
+    displayType: 'row',
+    column: 2,
+    labelWidth: 120,
+    properties: {
+      cityName: {
+        title: '城市名称',
+        type: 'string',
+        widget: 'select',
+        rules: [{ required: true, message: '请选择城市名称' }]
+      },
+      vehicleName: {
+        title: '车型',
+        type: 'string',
+        widget: 'select',
+        required: true,
+        rules: [{ required: true, message: '请选择车型' }]
+      },
+      userName: {
+        title: '用户名称',
+        type: 'string',
+        widget: 'input',
+        required: true,
+        placeholder: '请输入用户名'
+      },
+      mobile: {
+        title: '手机号',
+        type: 'number',
+        widget: 'input',
+        required: true,
+        placeholder: '请输入手机号'
+      },
+      startAddress: {
+        title: '起始地址',
+        type: 'string',
+        widget: 'input',
+        placeholder: '请输入起始地址'
+      },
+      endAddress: {
+        title: '结束地址',
+        type: 'string',
+        widget: 'input',
+        placeholder: '请输入结束地址'
+      },
+      orderAmount: {
+        title: '下单金额',
+        type: 'number',
+        widget: 'inputNumber',
+        placeholder: '请输入下单金额'
+      },
+      userPayAmount: {
+        title: '支付金额',
+        type: 'number',
+        widget: 'inputNumber',
+        placeholder: '请输入支付金额'
+      },
+      driverName: {
+        title: '司机名称',
+        type: 'string',
+        widget: 'input',
+        placeholder: '请输入司机名称',
+        required: true
+      },
+      driverAmount: {
+        title: '司机金额',
+        type: 'number',
+        widget: 'inputNumber',
+        placeholder: '请输入司机金额',
+        required: true
+      },
+      payType: {
+        title: '支付方式',
+        type: 'number',
+        widget: 'select',
+        placeholder: '请选择支付方式',
+        props: {
+          options: [
+            { label: '微信', value: 1 },
+            { label: '支付宝', value: 2 }
+          ]
+        }
+      },
+      state: {
+        title: '订单状态',
+        type: 'number',
+        widget: 'select',
+        placeholder: '请选择订单状态',
+        props: {
+          options: [
+            { label: '进行中', value: 1 },
+            { label: '已完成', value: 2 },
+            { label: '超时', value: 3 },
+            { label: '取消', value: 4 }
+          ]
+        }
+      },
+      useTime: {
+        title: '用车时间',
+        type: 'string',
+        widget: 'datePicker'
+      },
+      endTime: {
+        title: '结束时间',
+        type: 'string',
+        widget: 'datePicker'
+      }
+    }
+  }
+
+  return (
+    <Modal
+      title='创建订单'
+      width={800}
+      open={visable}
+      okText='确定'
+      cancelText='取消'
+      onOk={handleOk}
+      onCancel={handleCancel}
+    >
+      {/* 15.5 换成使用XRender制作表单*/}
+      <FormRender form={form} schema={schema} onMount={getInitData} />
+    </Modal>
+  )
+}
+
+export default CreateOrder
+
+```
+
+
+
+
+
+
+
+
+
+## 15-7  暗黑主题切换
+
+
+
+
+
+# 主题切换
+
+主题切换是一个非常有意思的功能，看上去很高大上，一旦知道背后原理，就会觉得很简单。
+
+[var() - CSS：层叠样式表 | MDN](https://developer.mozilla.org/zh-CN/docs/Web/CSS/var)
+
+## 实现步骤
+
+一、定义CSS变量
+
+```css
+:root {
+  --dark-bg-color: #fff;
+  --dark-color: #000;
+  --dark-home-bg-color: #f0f2f5;
+  --dark-logo-color: #001529;
+}
+.dark {
+  --dark-bg-color: #141414;
+  --dark-color: #fff;
+  --dark-home-bg-color: #000;
+  --dark-logo-color: #141414;
+}
+```
+
+二、修改HTML属性
+
+```js
+// 切换主题
+const handleSwitch = (isDark: boolean) => {
+  if (isDark) {
+      document.documentElement.dataset.theme = 'dark'
+      document.documentElement.classList.add('dark')
+  } else {
+      document.documentElement.dataset.theme = 'light'
+      document.documentElement.classList.remove('dark')
+  }
+}
+```
+
+三、保存状态. zustand.   store->index.tsx
+
+```js
+{
+    isDark: storage。,
+    updateTheme: isDark => set({ isDark }),
+}
+
+
+// NavHeader组件中，切换主题的时候，进行保存
+updateTheme(isDark)
+storage.set('isDark', isDark)
+```
+
+四、修改相关页面的背景色、字体颜色
+
+例如：NavHeader组件
+
+```css
+.navHeader{
+    background-color: var(--dark-bg-color);
+    color: var(--dark-color);
+}
+.nickName {
+  color: var(--dark-color);
+}
+```
+
+五、设置AntD组件的主题
+
+```js
+const isDark = useStore(state => state.isDark)
+
+<ConfigProvider
+   theme={{
+     token: {
+       colorPrimary: '#ed6c00'
+     },
+     algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm
+   }}
+ >
+...
+</ConfigProvider>
+```
+
+六、替换其它页面背景色
+
+1. layout/index.module.less（修改背景色）
+
+2. NavHeader/index.module.less（修改背景色和字体颜色）
+
+3. Menu/index.module.less（修改logo背景色）
+
+4. Tabs组件（修改背景色）
+
+5. 修改App.less（修改背景色）
+
+6. 修改DashBoard/index.module.less（修改背景色）
+
+7. 修改Welcome/index.module.less（修改背景色、字体颜色）
+
+8. 菜单颜色调整

@@ -1,6 +1,7 @@
 import { User } from '@/types/api'
 import { create } from 'zustand'
-import store from '@/store'
+//import store from '@/store'
+import storage from '@/utils/storage'
 
 // =============== zustand基础模型 ================
 // ts定义类型
@@ -18,6 +19,11 @@ import store from '@/store'
 // =================== token ==================
 // ts定义类型
 type Store = {
+  //15.7 暗黑主题
+  isDark: boolean
+  //更新主题的方法
+  updateTheme: (isDark: boolean) => void
+
   token: string
   userInfo: User.UserItem
   updateUserInfo: (userInfo: User.UserItem) => void
@@ -29,6 +35,11 @@ type Store = {
 }
 
 const useBearStore = create<Store>(set => ({
+  //============= 15.7 主题色
+  isDark: storage.get('isDark') || false,
+  updateTheme: isDark => set({ isDark }),
+  //========================================
+
   token: '',
   userInfo: {
     _id: '',
@@ -45,6 +56,7 @@ const useBearStore = create<Store>(set => ({
     deptName: '',
     userImg: ''
   },
+
   //保存用户数据的方法，使用形式：increasePopulation: () => set(state => ({ bears: state.bears + 1 })),
   updateUserInfo: (userInfo: User.UserItem) => set({ userInfo }),
   updateToken: token => set({ token }),

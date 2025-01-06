@@ -3,16 +3,24 @@ import Login from '@/views/login/Login'
 import Welcome from '@/views/welcome'
 import NotFound from '../views/404'
 import Layout from '@/layout'
-import Dashboard from '@/views/dashboard'
-import User from '@/views/system/user'
-import UserListAhooks from '@/views/system/userListAhooks'
-import Dept from '@/views/system/dept'
-import Menu from '@/views/system/menu'
+//import Dashboard from '@/views/dashboard'
+//import User from '@/views/system/user'
+//import UserListAhooks from '@/views/system/userListAhooks'
+//import Dept from '@/views/system/dept'
+//import Menu from '@/views/system/menu'
 import AuthLoader from './AuthLoader'
-import Role from '@/views/system/role'
-import OrderList from '@/views/order/OrderList'
-import OrderCluster from '@/views/order/OrderCluster'
-import DriverList from '@/views/order/DriverList'
+// import Role from '@/views/system/role'
+// import OrderList from '@/views/order/OrderList'
+// import OrderCluster from '@/views/order/OrderCluster'
+// import DriverList from '@/views/order/DriverList'
+
+// ================== 15.2 懒加载 ==================
+
+import React from 'react'
+import lazyLoad from './LazyLoad'
+//const Dashboard = React.lazy(() => import('@/views/dashboard'))
+
+// ================================================
 
 export const router = [
   {
@@ -36,42 +44,52 @@ export const router = [
       },
       {
         path: '/dashboard',
-        element: <Dashboard />
+        //element: <Dashboard />
+        element: lazyLoad(React.lazy(() => import('@/views/dashboard')))
       },
       {
         path: '/userList',
-        element: <User />
+        //element: <User />
+        element: lazyLoad(React.lazy(() => import('@/views/system/user')))
       },
       {
         path: '/userListAhooks',
-        element: <UserListAhooks />
+        //element: <UserListAhooks />
+        element: lazyLoad(React.lazy(() => import('@/views/system/userListAhooks')))
       },
+
       {
         path: '/deptlist',
-        element: <Dept />
+        //element: <Dept />
+        element: lazyLoad(React.lazy(() => import('@/views/system/dept')))
       },
       {
         path: '/menulist',
-        element: <Menu />
+        element: lazyLoad(React.lazy(() => import('@/views/system/menu')))
+        //element: <Menu />
         // meta: {
         //   auth: false //没有权限认证
         // }
       },
       {
         path: '/rolelist',
-        element: <Role />
+        element: lazyLoad(React.lazy(() => import('@/views/system/role')))
+        //element: <Role />
       },
       {
         path: '/orderList',
-        element: <OrderList />
+        //element: <OrderList />
+        element: lazyLoad(React.lazy(() => import('@/views/order/OrderList')))
       },
       {
         path: '/cluster',
-        element: <OrderCluster /> //订单聚合
+        //element: <OrderCluster /> //订单聚合
+        element: lazyLoad(React.lazy(() => import('@/views/order/OrderCluster')))
       },
       {
         path: '/driverList',
-        element: <DriverList /> //司机列表
+        //element: <DriverList /> //司机列表
+        element: lazyLoad(React.lazy(() => import('@/views/order/DriverList')))
       }
     ]
   },

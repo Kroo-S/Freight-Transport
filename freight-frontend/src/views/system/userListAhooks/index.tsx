@@ -1,11 +1,11 @@
-//ahook操作的分页页面
+//同user->index.tsx：使用ahook操作的页面
 
 import api from '@/api'
-import { PageParams, User } from '@/types/api'
+import { User } from '@/types/api'
 import { formatDate } from '@/utils'
 import { Button, Table, Form, Input, Select, Space, Modal, message } from 'antd'
 import { ColumnsType } from 'antd/es/table'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 //10.5 导入弹窗
 import CreateUser from '../user/CreateUser'
@@ -13,6 +13,7 @@ import { IAction } from '@/types/modal'
 
 //10.11 导入ahooks
 import { useAntdTable } from 'ahooks'
+import SearchForm from '@/component/SearchForm'
 
 const UserListAhooks = () => {
   //10-4 初始化form对象
@@ -179,7 +180,8 @@ const UserListAhooks = () => {
 
   return (
     <div className='user-list'>
-      <Form className='search-form' form={form} layout='inline' initialValues={{ state: 0 }}>
+      {/* 搜索栏 */}
+      {/* <Form className='search-form' form={form} layout='inline' initialValues={{ state: 0 }}>
         <Form.Item name='userId' label='用户ID'>
           <Input placeholder='ID' />
         </Form.Item>
@@ -207,7 +209,27 @@ const UserListAhooks = () => {
             </Button>
           </Space>
         </Form.Item>
-      </Form>
+      </Form> */}
+
+      {/* ====================== 15.4 封装搜索和重置按钮的搜索部分 =================== */}
+      <SearchForm form={form} initialValues={{ state: 1 }} submit={search.submit} reset={search.reset}>
+        <Form.Item name='userId' label='用户ID'>
+          <Input placeholder='ID' />
+        </Form.Item>
+
+        <Form.Item name='userName' label='用户名称'>
+          <Input placeholder='Name' />
+        </Form.Item>
+
+        <Form.Item name='state' label='状态'>
+          <Select style={{ width: 120 }}>
+            <Select.Option value={0}>所有</Select.Option>
+            <Select.Option value={1}>在职</Select.Option>
+            <Select.Option value={2}>试用期</Select.Option>
+            <Select.Option value={3}>离职</Select.Option>
+          </Select>
+        </Form.Item>
+      </SearchForm>
 
       <div className='base-table'>
         <div className='header-wrapper'>

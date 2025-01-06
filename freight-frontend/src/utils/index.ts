@@ -49,7 +49,7 @@ export const formatDate = (date?: Date | string, rule?: string) => {
     's+': curDate.getSeconds()
   }
   for (const k in O) {
-    const val: string = O[k].toString()
+    //const val: string = O[k].toString()
     fmt = fmt.replace(new RegExp(`(${k})`), O[k] > 9 ? O[k].toString() : '0' + O[k].toString())
     // fmt = fmt.replace(new RegExp(`(${k})`), ('00' + val).substring(val.length))
   }
@@ -79,7 +79,9 @@ export const searchRoute: any = (path: string, routes: any = []) => {
     if (item.path === path) return item
     //子对象返回
     if (item.children) {
-      return searchRoute(path, item.children)
+      const result = searchRoute(path, item.children)
+      //当有值的时候，return
+      if (result) return result
     }
   }
   return '' //没找到返回空字符串
@@ -95,4 +97,21 @@ export const formateMobile = (mobile?: number) => {
   if (!mobile) return '-'
   const phone = mobile.toString()
   return phone.replace(/(\d{3})\d*(\d{4})/, '$1****$2')
+}
+
+/**
+ * 递归查找树的路径
+ */
+export const findTreeNode = (tree: Menu.MenuItem[], pathName: string, path: string[]): string[] => {
+  if (!tree) return []
+  for (const data of tree) {
+    path.push(data.menuName)
+    if (data.path === pathName) return path
+    if (data.children?.length) {
+      const list = findTreeNode(data.children, pathName, path)
+      if (list?.length) return list
+    }
+    path.pop()
+  }
+  return []
 }
